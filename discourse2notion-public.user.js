@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Discourse 帖子导出到 Notion / 文稿
 // @namespace    https://discourse.org/
-// @version      4.6.2-public
-// @description  导出 Discourse 社区帖子到 Notion 或 Markdown（保留原生块与 Markdown 格式）
-// @author       ilvsx
+// @version      4.6.3-public
+// @description  导出 Discourse 社区帖子到 Notion 或文稿
+// @author       QN
 // @license      MIT
 // @match        https://*/t/*
 // @match        https://*/t/topic/*
@@ -33,10 +33,6 @@
         FILTER_INCLUDE: "ld_export_filter_include",
         FILTER_EXCLUDE: "ld_export_filter_exclude",
         FILTER_MINLEN: "ld_export_filter_minlen",
-        AI_FILTER_ENABLED: "ld_export_ai_filter_enabled",
-        AI_API_URL: "ld_export_ai_api_url",
-        AI_API_KEY: "ld_export_ai_api_key",
-        AI_MODEL_ID: "ld_export_ai_model_id",
         // UI 状态
         PANEL_COLLAPSED: "ld_export_panel_collapsed",
         BUBBLE_Y: "ld_export_bubble_y",
@@ -59,10 +55,6 @@
         include: "",
         exclude: "",
         minLen: 0,
-        aiEnabled: false,
-        aiApiUrl: "",
-        aiApiKey: "",
-        aiModelId: "",
         notionApiKey: "",
         notionParentPageId: "",
         notionDatabaseId: "",
@@ -1067,10 +1059,8 @@
             .trim();
     }
 
-    function buildExportOutcomeNotes(aiOutcome, extra = []) {
-        const notes = Array.isArray(extra) ? extra.slice() : [];
-        if (aiOutcome?.skipped) notes.push("AI 筛选未启用");
-        return notes;
+    function buildExportOutcomeNotes(extra = []) {
+        return Array.isArray(extra) ? extra.slice() : [];
     }
 
     async function fetchTopicFromDiscourse(topicId) {
@@ -1127,7 +1117,7 @@
             posts,
             imgMap: new Map(),
             filterSummary,
-            aiOutcome: { skipped: true },
+
         };
     }
 
@@ -1149,7 +1139,7 @@
             markdown,
             filename: `${safeTitle}.md`,
             settings: context.settings,
-            aiOutcome: context.aiOutcome,
+
         };
     }
 
@@ -1262,7 +1252,7 @@
             triggerBrowserDownload(downloadUrl, payload.filename);
 
             ui.setProgress(1, 1, "导出完成");
-            const finalNotes = buildExportOutcomeNotes(payload.aiOutcome);
+            const finalNotes = buildExportOutcomeNotes();
             const suffix = finalNotes.length ? `（${finalNotes.join("；")}）` : "";
             ui.setStatus(`✅ 已下载 Markdown: ${payload.filename}${suffix}`, "#6ee7b7");
         } catch (e) {
@@ -1309,7 +1299,7 @@
             }, payload.settings);
 
             ui.setProgress(1, 1, "导出完成");
-            const finalNotes = buildExportOutcomeNotes(payload.aiOutcome, ["已写入 Notion"]);
+            const finalNotes = buildExportOutcomeNotes(["已写入 Notion"]);
             const suffix = finalNotes.length ? `（${finalNotes.join("；")}）` : "";
             ui.setStatus(`✅ 已导出到 Notion${suffix}`, "#6ee7b7");
             console.log("Notion export result", notionResult);
@@ -1370,7 +1360,7 @@
 
 /*
 ========================================
-公开版配置说明
+使用说明
 ========================================
 1. 首次使用前，请先在脚本顶部 DEFAULTS 中填写：
    - notionApiKey: 你的 Notion 集成密钥
@@ -1392,4 +1382,7 @@
 5. 默认行为：
    - 默认只导出楼主正文
    - 勾选“连同楼层回复一起收藏”后，会连回复一起导出
+
+6. 署名：
+   - 公开整理：QN
 */
